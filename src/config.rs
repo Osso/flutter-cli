@@ -49,11 +49,11 @@ impl Config {
             args.push(format!("--dart-define-from-file={dart_define}"));
         }
 
-        if let Some(ref device) = self.device {
-            if device != "auto" {
-                args.push("--device-id".to_string());
-                args.push(device.clone());
-            }
+        if let Some(ref device) = self.device
+            && device != "auto"
+        {
+            args.push("--device-id".to_string());
+            args.push(device.clone());
         }
 
         args.extend(self.extra_args.iter().cloned());

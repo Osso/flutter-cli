@@ -21,13 +21,10 @@ pub async fn ensure_connection(
     // Try existing state
     if let Some(state) = State::load(project_dir)? {
         if state.is_pid_alive() {
-            match vm_service::try_connect(&state.ws_uri, 3000).await {
-                Ok(mut conn) => {
-                    if conn.ping().await {
-                        return Ok(conn);
-                    }
-                }
-                Err(_) => {}
+            if let Ok(mut conn) = vm_service::try_connect(&state.ws_uri, 3000).await
+                && conn.ping().await
+            {
+                return Ok(conn);
             }
             // Connection failed, kill the old process
             eprintln!("VM Service unreachable, restarting flutter run...");

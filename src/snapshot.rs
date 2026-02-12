@@ -216,10 +216,10 @@ fn is_framework_widget(widget_type: &str) -> bool {
 }
 
 fn format_node(node: &WidgetNode, depth: usize, opts: &SnapshotOptions, lines: &mut Vec<String>) {
-    if let Some(max) = opts.max_depth {
-        if depth > max {
-            return;
-        }
+    if let Some(max) = opts.max_depth
+        && depth > max
+    {
+        return;
     }
 
     // Compact mode: skip framework internals, promote children
@@ -293,7 +293,7 @@ fn glob_match(pattern: &str, text: &str) -> bool {
             return false;
         }
     }
-    !parts.last().is_some_and(|p| !p.is_empty()) || pos == text.len()
+    parts.last().is_none_or(|p| p.is_empty()) || pos == text.len()
 }
 
 fn collect_filtered_subtrees(node: &WidgetNode, opts: &SnapshotOptions, lines: &mut Vec<String>) {

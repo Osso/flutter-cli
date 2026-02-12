@@ -236,12 +236,11 @@ pub async fn cmd_reload(
     let project_dir = resolve_project_dir(project_dir)?;
 
     // Hot reload via flutter run --machine stdin protocol
-    if url.is_none() {
-        if let Some(state) = State::load(&project_dir)? {
-            if state.is_pid_alive() {
-                return send_machine_command(&state, false, json);
-            }
-        }
+    if url.is_none()
+        && let Some(state) = State::load(&project_dir)?
+        && state.is_pid_alive()
+    {
+        return send_machine_command(&state, false, json);
     }
 
     // Fallback: use VM Service directly
@@ -271,12 +270,11 @@ pub async fn cmd_restart(
     let project_dir = resolve_project_dir(project_dir)?;
 
     // Hot restart via flutter run --machine stdin protocol
-    if url.is_none() {
-        if let Some(state) = State::load(&project_dir)? {
-            if state.is_pid_alive() {
-                return send_machine_command(&state, true, json);
-            }
-        }
+    if url.is_none()
+        && let Some(state) = State::load(&project_dir)?
+        && state.is_pid_alive()
+    {
+        return send_machine_command(&state, true, json);
     }
 
     // Fallback: VM Service doesn't have a clean hot restart method
@@ -330,57 +328,11 @@ pub async fn cmd_status(
     let project_dir = resolve_project_dir(project_dir)?;
 
     if let Some(ref url) = url {
-        let mut conn = crate::vm_service::VmServiceConnection::connect(url).await?;
-        let alive = conn.ping().await;
-        if json {
-            println!(
-                "{}",
-                serde_json::json!({ "url": url, "connected": alive, "managed": false })
-            );
-        } else {
-            println!("URL: {url}");
-            println!("Connected: {alive}");
-        }
-        return Ok(());
+        return print_url_status(url, json).await;
     }
 
     match State::load(&project_dir)? {
-        Some(state) => {
-            let pid_alive = state.is_pid_alive();
-            let ws_reachable = if pid_alive {
-                match crate::vm_service::try_connect(&state.ws_uri, 2000).await {
-                    Ok(mut conn) => conn.ping().await,
-                    Err(_) => false,
-                }
-            } else {
-                false
-            };
-
-            if json {
-                println!(
-                    "{}",
-                    serde_json::json!({
-                        "pid": state.pid,
-                        "ws_uri": state.ws_uri,
-                        "app_id": state.app_id,
-                        "pid_alive": pid_alive,
-                        "ws_reachable": ws_reachable,
-                        "managed": true,
-                    })
-                );
-            } else {
-                println!(
-                    "PID: {} ({})",
-                    state.pid,
-                    if pid_alive { "alive" } else { "dead" }
-                );
-                println!("VM Service: {}", state.ws_uri);
-                if let Some(ref id) = state.app_id {
-                    println!("App ID: {id}");
-                }
-                println!("Reachable: {ws_reachable}");
-            }
-        }
+        Some(state) => print_managed_status(&state, json).await,
         None => {
             if json {
                 println!(
@@ -390,7 +342,60 @@ pub async fn cmd_status(
             } else {
                 println!("No managed flutter run process");
             }
+            Ok(())
         }
+    }
+}
+
+async fn print_url_status(url: &str, json: bool) -> Result<()> {
+    let mut conn = crate::vm_service::VmServiceConnection::connect(url).await?;
+    let alive = conn.ping().await;
+    if json {
+        println!(
+            "{}",
+            serde_json::json!({ "url": url, "connected": alive, "managed": false })
+        );
+    } else {
+        println!("URL: {url}");
+        println!("Connected: {alive}");
+    }
+    Ok(())
+}
+
+async fn print_managed_status(state: &State, json: bool) -> Result<()> {
+    let pid_alive = state.is_pid_alive();
+    let ws_reachable = if pid_alive {
+        match crate::vm_service::try_connect(&state.ws_uri, 2000).await {
+            Ok(mut conn) => conn.ping().await,
+            Err(_) => false,
+        }
+    } else {
+        false
+    };
+
+    if json {
+        println!(
+            "{}",
+            serde_json::json!({
+                "pid": state.pid,
+                "ws_uri": state.ws_uri,
+                "app_id": state.app_id,
+                "pid_alive": pid_alive,
+                "ws_reachable": ws_reachable,
+                "managed": true,
+            })
+        );
+    } else {
+        println!(
+            "PID: {} ({})",
+            state.pid,
+            if pid_alive { "alive" } else { "dead" }
+        );
+        println!("VM Service: {}", state.ws_uri);
+        if let Some(ref id) = state.app_id {
+            println!("App ID: {id}");
+        }
+        println!("Reachable: {ws_reachable}");
     }
     Ok(())
 }
