@@ -24,11 +24,7 @@ pub async fn find_flutter_isolate(conn: &mut VmServiceConnection) -> Result<Stri
         let extensions = isolate
             .get("extensionRPCs")
             .and_then(|e| e.as_array())
-            .map(|arr| {
-                arr.iter()
-                    .filter_map(|v| v.as_str())
-                    .collect::<Vec<_>>()
-            })
+            .map(|arr| arr.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>())
             .unwrap_or_default();
 
         if extensions.iter().any(|ext| ext.starts_with("ext.flutter")) {

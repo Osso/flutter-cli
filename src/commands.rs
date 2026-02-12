@@ -192,10 +192,7 @@ pub async fn cmd_dump_render(
         )
         .await?;
 
-    let text = result
-        .get("data")
-        .and_then(|d| d.as_str())
-        .unwrap_or("");
+    let text = result.get("data").and_then(|d| d.as_str()).unwrap_or("");
 
     if json {
         println!("{}", serde_json::json!({ "render_tree": text }));
@@ -221,10 +218,7 @@ pub async fn cmd_dump_semantics(
         )
         .await?;
 
-    let text = result
-        .get("data")
-        .and_then(|d| d.as_str())
-        .unwrap_or("");
+    let text = result.get("data").and_then(|d| d.as_str()).unwrap_or("");
 
     if json {
         println!("{}", serde_json::json!({ "semantics_tree": text }));
@@ -318,7 +312,10 @@ fn send_machine_command(state: &State, full_restart: bool, json: bool) -> Result
     };
 
     if json {
-        println!("{}", serde_json::json!({ "action": action, "status": "sent" }));
+        println!(
+            "{}",
+            serde_json::json!({ "action": action, "status": "sent" })
+        );
     } else {
         println!("{action} triggered");
     }
@@ -372,7 +369,11 @@ pub async fn cmd_status(
                     })
                 );
             } else {
-                println!("PID: {} ({})", state.pid, if pid_alive { "alive" } else { "dead" });
+                println!(
+                    "PID: {} ({})",
+                    state.pid,
+                    if pid_alive { "alive" } else { "dead" }
+                );
                 println!("VM Service: {}", state.ws_uri);
                 if let Some(ref id) = state.app_id {
                     println!("App ID: {id}");
@@ -382,7 +383,10 @@ pub async fn cmd_status(
         }
         None => {
             if json {
-                println!("{}", serde_json::json!({ "managed": false, "running": false }));
+                println!(
+                    "{}",
+                    serde_json::json!({ "managed": false, "running": false })
+                );
             } else {
                 println!("No managed flutter run process");
             }

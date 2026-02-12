@@ -86,9 +86,11 @@ async fn main() -> Result<()> {
     let json = cli.json;
 
     match cli.command {
-        Command::Snapshot { depth, filter, compact } => {
-            commands::cmd_snapshot(project_dir, cli.url, depth, filter, compact, json).await
-        }
+        Command::Snapshot {
+            depth,
+            filter,
+            compact,
+        } => commands::cmd_snapshot(project_dir, cli.url, depth, filter, compact, json).await,
         Command::Screenshot { id, path } => {
             commands::cmd_screenshot(project_dir, cli.url, id, &path, json).await
         }
@@ -98,12 +100,8 @@ async fn main() -> Result<()> {
         Command::Layout { value_id } => {
             commands::cmd_layout(project_dir, cli.url, &value_id, json).await
         }
-        Command::DumpRender => {
-            commands::cmd_dump_render(project_dir, cli.url, json).await
-        }
-        Command::DumpSemantics => {
-            commands::cmd_dump_semantics(project_dir, cli.url, json).await
-        }
+        Command::DumpRender => commands::cmd_dump_render(project_dir, cli.url, json).await,
+        Command::DumpSemantics => commands::cmd_dump_semantics(project_dir, cli.url, json).await,
         Command::Reload => commands::cmd_reload(project_dir, cli.url, json).await,
         Command::Restart => commands::cmd_restart(project_dir, cli.url, json).await,
         Command::Status => commands::cmd_status(project_dir, cli.url, json).await,

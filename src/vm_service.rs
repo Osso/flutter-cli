@@ -55,17 +55,11 @@ impl VmServiceConnection {
                         .get("message")
                         .and_then(|m| m.as_str())
                         .unwrap_or("unknown error");
-                    let code = error
-                        .get("code")
-                        .and_then(|c| c.as_i64())
-                        .unwrap_or(0);
+                    let code = error.get("code").and_then(|c| c.as_i64()).unwrap_or(0);
                     return Err(anyhow!("VM Service error {code}: {msg}"));
                 }
 
-                return Ok(resp
-                    .get("result")
-                    .cloned()
-                    .unwrap_or(serde_json::json!({})));
+                return Ok(resp.get("result").cloned().unwrap_or(serde_json::json!({})));
             }
         }
         Err(anyhow!("WebSocket closed without response"))
@@ -75,7 +69,6 @@ impl VmServiceConnection {
     pub async fn ping(&mut self) -> bool {
         self.send("getVersion", serde_json::json!({})).await.is_ok()
     }
-
 }
 
 /// Try to connect to a VM Service URL with a timeout.

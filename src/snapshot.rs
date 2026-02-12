@@ -215,12 +215,7 @@ fn is_framework_widget(widget_type: &str) -> bool {
     false
 }
 
-fn format_node(
-    node: &WidgetNode,
-    depth: usize,
-    opts: &SnapshotOptions,
-    lines: &mut Vec<String>,
-) {
+fn format_node(node: &WidgetNode, depth: usize, opts: &SnapshotOptions, lines: &mut Vec<String>) {
     if let Some(max) = opts.max_depth {
         if depth > max {
             return;
@@ -240,7 +235,11 @@ fn format_node(
 
     // Show text content for Text widgets
     if node.widget_type == "Text" && !node.description.is_empty() && node.description != "Text" {
-        let text = node.description.strip_prefix("Text").unwrap_or(&node.description).trim();
+        let text = node
+            .description
+            .strip_prefix("Text")
+            .unwrap_or(&node.description)
+            .trim();
         if !text.is_empty() {
             // Remove surrounding quotes if already present
             let text = text.trim_matches('"');
@@ -297,11 +296,7 @@ fn glob_match(pattern: &str, text: &str) -> bool {
     !parts.last().is_some_and(|p| !p.is_empty()) || pos == text.len()
 }
 
-fn collect_filtered_subtrees(
-    node: &WidgetNode,
-    opts: &SnapshotOptions,
-    lines: &mut Vec<String>,
-) {
+fn collect_filtered_subtrees(node: &WidgetNode, opts: &SnapshotOptions, lines: &mut Vec<String>) {
     let filter = opts.filter.as_deref().unwrap_or("");
     if name_matches_filter(&node.widget_type, filter) {
         let no_filter_opts = SnapshotOptions {
@@ -328,11 +323,7 @@ mod tests {
         }
     }
 
-    fn make_widget(
-        widget_type: &str,
-        value_id: &str,
-        children: Vec<WidgetNode>,
-    ) -> WidgetNode {
+    fn make_widget(widget_type: &str, value_id: &str, children: Vec<WidgetNode>) -> WidgetNode {
         WidgetNode {
             widget_type: widget_type.to_string(),
             value_id: value_id.to_string(),
@@ -412,7 +403,11 @@ mod tests {
             vec![make_widget(
                 "L1",
                 "i1",
-                vec![make_widget("L2", "i2", vec![make_widget("L3", "i3", vec![])])],
+                vec![make_widget(
+                    "L2",
+                    "i2",
+                    vec![make_widget("L3", "i3", vec![])],
+                )],
             )],
         )];
         let opts = SnapshotOptions {
@@ -420,10 +415,7 @@ mod tests {
             ..default_opts()
         };
         let output = format_tree(&tree, &opts);
-        assert_eq!(
-            output,
-            "L0  [i0]\n  L1  [i1]\n    L2  [i2]"
-        );
+        assert_eq!(output, "L0  [i0]\n  L1  [i1]\n    L2  [i2]");
     }
 
     #[test]
@@ -480,7 +472,11 @@ mod tests {
                 make_widget(
                     "ComicList",
                     "i4",
-                    vec![make_widget("ComicCard", "i5", vec![make_text("Superman", "i6")])],
+                    vec![make_widget(
+                        "ComicCard",
+                        "i5",
+                        vec![make_text("Superman", "i6")],
+                    )],
                 ),
             ],
         )];
@@ -549,7 +545,11 @@ mod tests {
 
     #[test]
     fn filter_no_match() {
-        let tree = vec![make_widget("App", "i0", vec![make_widget("NavBar", "i1", vec![])])];
+        let tree = vec![make_widget(
+            "App",
+            "i0",
+            vec![make_widget("NavBar", "i1", vec![])],
+        )];
         let opts = SnapshotOptions {
             filter: Some("DoesNotExist".to_string()),
             ..default_opts()

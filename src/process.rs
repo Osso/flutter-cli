@@ -97,8 +97,7 @@ fn parse_flutter_machine_output(
     _args: &[String],
 ) -> Result<(String, Option<String>)> {
     let reader = BufReader::new(stdout);
-    let deadline =
-        std::time::Instant::now() + std::time::Duration::from_secs(120);
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(120);
 
     let mut ws_uri: Option<String> = None;
     let mut app_id: Option<String> = None;
