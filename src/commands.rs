@@ -188,10 +188,7 @@ async fn dump_flutter_tree(
     let isolate_id = isolate::find_flutter_isolate(&mut conn).await?;
 
     let result = conn
-        .send(
-            extension,
-            serde_json::json!({ "isolateId": isolate_id }),
-        )
+        .send(extension, serde_json::json!({ "isolateId": isolate_id }))
         .await?;
 
     let text = result.get("data").and_then(|d| d.as_str()).unwrap_or("");
