@@ -176,10 +176,12 @@ pub async fn cmd_layout(
     Ok(())
 }
 
-pub async fn cmd_dump_render(
+async fn dump_flutter_tree(
     project_dir: Option<String>,
     url: Option<String>,
     json: bool,
+    extension: &str,
+    json_key: &str,
 ) -> Result<()> {
     let project_dir = resolve_project_dir(project_dir)?;
     let mut conn = process::ensure_connection(&project_dir, url.as_deref()).await?;
@@ -187,7 +189,7 @@ pub async fn cmd_dump_render(
 
     let result = conn
         .send(
-            "ext.flutter.debugDumpRenderTree",
+            extension,
             serde_json::json!({ "isolateId": isolate_id }),
         )
         .await?;
@@ -195,11 +197,26 @@ pub async fn cmd_dump_render(
     let text = result.get("data").and_then(|d| d.as_str()).unwrap_or("");
 
     if json {
-        println!("{}", serde_json::json!({ "render_tree": text }));
+        println!("{}", serde_json::json!({ json_key: text }));
     } else {
         println!("{text}");
     }
     Ok(())
+}
+
+pub async fn cmd_dump_render(
+    project_dir: Option<String>,
+    url: Option<String>,
+    json: bool,
+) -> Result<()> {
+    dump_flutter_tree(
+        project_dir,
+        url,
+        json,
+        "ext.flutter.debugDumpRenderTree",
+        "render_tree",
+    )
+    .await
 }
 
 pub async fn cmd_dump_semantics(
@@ -207,25 +224,14 @@ pub async fn cmd_dump_semantics(
     url: Option<String>,
     json: bool,
 ) -> Result<()> {
-    let project_dir = resolve_project_dir(project_dir)?;
-    let mut conn = process::ensure_connection(&project_dir, url.as_deref()).await?;
-    let isolate_id = isolate::find_flutter_isolate(&mut conn).await?;
-
-    let result = conn
-        .send(
-            "ext.flutter.debugDumpSemanticsTreeInTraversalOrder",
-            serde_json::json!({ "isolateId": isolate_id }),
-        )
-        .await?;
-
-    let text = result.get("data").and_then(|d| d.as_str()).unwrap_or("");
-
-    if json {
-        println!("{}", serde_json::json!({ "semantics_tree": text }));
-    } else {
-        println!("{text}");
-    }
-    Ok(())
+    dump_flutter_tree(
+        project_dir,
+        url,
+        json,
+        "ext.flutter.debugDumpSemanticsTreeInTraversalOrder",
+        "semantics_tree",
+    )
+    .await
 }
 
 pub async fn cmd_reload(
