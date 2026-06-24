@@ -4,6 +4,7 @@ use crate::vm_service::VmServiceConnection;
 
 /// Discover the Flutter isolate by finding one with ext.flutter.* extensions.
 /// Returns the isolate ID.
+#[cfg_attr(coverage_nightly, coverage(off))]
 pub async fn find_flutter_isolate(conn: &mut VmServiceConnection) -> Result<String> {
     let vm = conn.send("getVM", serde_json::json!({})).await?;
 

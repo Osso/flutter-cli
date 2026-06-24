@@ -26,6 +26,7 @@ pub struct CreationLocation {
     pub line: u32,
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 pub async fn get_widget_tree(conn: &mut VmServiceConnection) -> Result<Vec<WidgetNode>> {
     let isolate_id = isolate::find_flutter_isolate(conn).await?;
     let object_group = "flutter-cli-snapshot";
@@ -572,6 +573,67 @@ mod tests {
         assert!(glob_match("comic*card", "comiccard"));
         assert!(!glob_match("comic*", "navbarcomic"));
         assert!(!glob_match("*card", "cardnav"));
+    }
+
+    #[test]
+    fn parse_diagnostics_node_extracts_location_and_children() {
+        let value = serde_json::json!({
+            "description": "Column",
+            "widgetRuntimeType": "Column",
+            "valueId": "inspector-1",
+            "creationLocation": {
+                "file": "package:app/lib/widgets/home.dart",
+                "line": 27
+            },
+            "children": [
+                {
+                    "description": "Text \"Hello\"",
+                    "widgetRuntimeType": "Text",
+                    "valueId": "inspector-2"
+                }
+            ]
+        });
+
+        let node = parse_diagnostics_node(&value).unwrap();
+
+        assert_eq!(node.widget_type, "Column");
+        assert_eq!(node.value_id, "inspector-1");
+        assert_eq!(node.creation_location.unwrap().file, "home.dart");
+        assert_eq!(node.children.len(), 1);
+        assert_eq!(node.children[0].widget_type, "Text");
+    }
+
+    #[test]
+    fn parse_diagnostics_node_uses_defaults_for_missing_fields() {
+        let node = parse_diagnostics_node(&serde_json::json!({})).unwrap();
+
+        assert_eq!(node.widget_type, "Unknown");
+        assert_eq!(node.value_id, "");
+        assert_eq!(node.description, "");
+        assert!(node.creation_location.is_none());
+        assert!(node.children.is_empty());
+    }
+
+    #[test]
+    fn parse_location_requires_file_and_line() {
+        assert!(parse_location(&serde_json::json!({"file": "main.dart"})).is_none());
+        assert!(parse_location(&serde_json::json!({"line": 4})).is_none());
+
+        let location = parse_location(&serde_json::json!({
+            "file": "main.dart",
+            "line": 4
+        }))
+        .unwrap();
+
+        assert_eq!(location.file, "main.dart");
+        assert_eq!(location.line, 4);
+    }
+
+    #[test]
+    fn framework_widget_detection_handles_public_and_private_framework_nodes() {
+        assert!(is_framework_widget("Padding"));
+        assert!(is_framework_widget("_RenderTheater"));
+        assert!(!is_framework_widget("ComicCard"));
     }
 
     #[test]

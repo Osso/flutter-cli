@@ -61,3 +61,96 @@ impl Config {
         args
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn temp_project_dir(name: &str) -> std::path::PathBuf {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        std::env::temp_dir().join(format!(
+            "flutter-cli-config-{name}-{}-{nonce}",
+            std::process::id()
+        ))
+    }
+
+    #[test]
+    fn load_returns_default_when_config_is_missing() {
+        let project_dir = temp_project_dir("missing");
+
+        let config = Config::load(&project_dir).unwrap();
+
+        assert_eq!(config.flutter_run_args(), vec!["run", "--machine"]);
+    }
+
+    #[test]
+    fn load_reads_flutter_cli_toml() {
+        let project_dir = temp_project_dir("toml");
+        std::fs::create_dir_all(&project_dir).unwrap();
+        std::fs::write(
+            project_dir.join(CONFIG_FILENAME),
+            r#"
+device = "pixel"
+flavor = "dev"
+target = "lib/main_dev.dart"
+dart_define_from_file = "env/dev.json"
+extra_args = ["--verbose", "--hot"]
+"#,
+        )
+        .unwrap();
+
+        let config = Config::load(&project_dir).unwrap();
+
+        assert_eq!(config.device.as_deref(), Some("pixel"));
+        assert_eq!(config.flavor.as_deref(), Some("dev"));
+        assert_eq!(config.target.as_deref(), Some("lib/main_dev.dart"));
+        assert_eq!(
+            config.dart_define_from_file.as_deref(),
+            Some("env/dev.json")
+        );
+        assert_eq!(config.extra_args, vec!["--verbose", "--hot"]);
+
+        std::fs::remove_dir_all(project_dir).ok();
+    }
+
+    #[test]
+    fn flutter_run_args_preserve_expected_order() {
+        let config = Config {
+            device: Some("emulator-5554".to_string()),
+            flavor: Some("staging".to_string()),
+            target: Some("lib/main_staging.dart".to_string()),
+            dart_define_from_file: Some("env/staging.json".to_string()),
+            extra_args: vec!["--dart-define=feature=true".to_string()],
+        };
+
+        assert_eq!(
+            config.flutter_run_args(),
+            vec![
+                "run",
+                "--machine",
+                "--flavor",
+                "staging",
+                "--target",
+                "lib/main_staging.dart",
+                "--dart-define-from-file=env/staging.json",
+                "--device-id",
+                "emulator-5554",
+                "--dart-define=feature=true",
+            ]
+        );
+    }
+
+    #[test]
+    fn flutter_run_args_omits_auto_device() {
+        let config = Config {
+            device: Some("auto".to_string()),
+            ..Config::default()
+        };
+
+        assert_eq!(config.flutter_run_args(), vec!["run", "--machine"]);
+    }
+}

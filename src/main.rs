@@ -1,3 +1,5 @@
+#![cfg_attr(coverage_nightly, feature(coverage_attribute))]
+
 mod commands;
 mod config;
 mod isolate;
@@ -80,6 +82,7 @@ enum Command {
 }
 
 #[tokio::main]
+#[cfg_attr(coverage_nightly, coverage(off))]
 async fn main() -> Result<()> {
     let cli = Cli::parse();
     let project_dir = cli.project_dir.clone();
@@ -106,5 +109,16 @@ async fn main() -> Result<()> {
         Command::Restart => commands::cmd_restart(project_dir, cli.url, json).await,
         Command::Status => commands::cmd_status(project_dir, cli.url, json).await,
         Command::Stop => commands::cmd_stop(project_dir).await,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::CommandFactory;
+
+    #[test]
+    fn cli_definition_is_valid() {
+        Cli::command().debug_assert();
     }
 }

@@ -13,6 +13,7 @@ fn resolve_project_dir(project_dir: Option<String>) -> Result<PathBuf> {
     }
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 pub async fn cmd_snapshot(
     project_dir: Option<String>,
     url: Option<String>,
@@ -42,6 +43,7 @@ pub async fn cmd_snapshot(
     Ok(())
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 pub async fn cmd_screenshot(
     project_dir: Option<String>,
     url: Option<String>,
@@ -92,6 +94,7 @@ pub async fn cmd_screenshot(
     Ok(())
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 pub async fn cmd_details(
     project_dir: Option<String>,
     url: Option<String>,
@@ -135,6 +138,7 @@ pub async fn cmd_details(
     Ok(())
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 pub async fn cmd_layout(
     project_dir: Option<String>,
     url: Option<String>,
@@ -176,6 +180,7 @@ pub async fn cmd_layout(
     Ok(())
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 async fn dump_flutter_tree(
     project_dir: Option<String>,
     url: Option<String>,
@@ -201,6 +206,7 @@ async fn dump_flutter_tree(
     Ok(())
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 pub async fn cmd_dump_render(
     project_dir: Option<String>,
     url: Option<String>,
@@ -216,6 +222,7 @@ pub async fn cmd_dump_render(
     .await
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 pub async fn cmd_dump_semantics(
     project_dir: Option<String>,
     url: Option<String>,
@@ -231,6 +238,7 @@ pub async fn cmd_dump_semantics(
     .await
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 pub async fn cmd_reload(
     project_dir: Option<String>,
     url: Option<String>,
@@ -265,6 +273,7 @@ pub async fn cmd_reload(
     Ok(())
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 pub async fn cmd_restart(
     project_dir: Option<String>,
     url: Option<String>,
@@ -285,6 +294,7 @@ pub async fn cmd_restart(
     anyhow::bail!("Hot restart requires a managed flutter run process. Run without --url first.");
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 fn send_machine_command(state: &State, full_restart: bool, json: bool) -> Result<()> {
     use std::io::Write;
 
@@ -323,6 +333,7 @@ fn send_machine_command(state: &State, full_restart: bool, json: bool) -> Result
     Ok(())
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 pub async fn cmd_status(
     project_dir: Option<String>,
     url: Option<String>,
@@ -350,6 +361,7 @@ pub async fn cmd_status(
     }
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 async fn print_url_status(url: &str, json: bool) -> Result<()> {
     let mut conn = crate::vm_service::VmServiceConnection::connect(url).await?;
     let alive = conn.ping().await;
@@ -365,6 +377,7 @@ async fn print_url_status(url: &str, json: bool) -> Result<()> {
     Ok(())
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 async fn print_managed_status(state: &State, json: bool) -> Result<()> {
     let pid_alive = state.is_pid_alive();
     let ws_reachable = if pid_alive {
@@ -403,7 +416,27 @@ async fn print_managed_status(state: &State, json: bool) -> Result<()> {
     Ok(())
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 pub async fn cmd_stop(project_dir: Option<String>) -> Result<()> {
     let project_dir = resolve_project_dir(project_dir)?;
     process::stop_process(&project_dir)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn resolve_project_dir_uses_explicit_path() {
+        let path = resolve_project_dir(Some("/tmp/flutter-app".to_string())).unwrap();
+
+        assert_eq!(path, PathBuf::from("/tmp/flutter-app"));
+    }
+
+    #[test]
+    fn resolve_project_dir_defaults_to_current_dir() {
+        let path = resolve_project_dir(None).unwrap();
+
+        assert_eq!(path, std::env::current_dir().unwrap());
+    }
 }

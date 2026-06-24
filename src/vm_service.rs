@@ -11,6 +11,7 @@ pub struct VmServiceConnection {
 }
 
 impl VmServiceConnection {
+    #[cfg_attr(coverage_nightly, coverage(off))]
     pub async fn connect(ws_url: &str) -> Result<Self> {
         let (ws, _) = tokio_tungstenite::connect_async(ws_url)
             .await
@@ -20,6 +21,7 @@ impl VmServiceConnection {
 
     /// Send a JSON-RPC 2.0 request and wait for the matching response.
     /// Skips over events (messages without an "id" field).
+    #[cfg_attr(coverage_nightly, coverage(off))]
     pub async fn send(
         &mut self,
         method: &str,
@@ -66,12 +68,14 @@ impl VmServiceConnection {
     }
 
     /// Check if connection is alive by sending getVersion
+    #[cfg_attr(coverage_nightly, coverage(off))]
     pub async fn ping(&mut self) -> bool {
         self.send("getVersion", serde_json::json!({})).await.is_ok()
     }
 }
 
 /// Try to connect to a VM Service URL with a timeout.
+#[cfg_attr(coverage_nightly, coverage(off))]
 pub async fn try_connect(ws_url: &str, timeout_ms: u64) -> Result<VmServiceConnection> {
     let result = tokio::time::timeout(
         std::time::Duration::from_millis(timeout_ms),

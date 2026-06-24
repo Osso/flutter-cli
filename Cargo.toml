@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2024"
 description = "Flutter app inspection CLI using Dart VM Service Protocol"
 
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage_nightly)'] }
+
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 clap = { version = "4", features = ["derive"] }
@@ -19,4 +22,3 @@ libc = "0.2"
 
 [profile.release]
 lto = false
-incremental = true
